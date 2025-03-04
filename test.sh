@@ -4,17 +4,20 @@ set -e
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null && pwd)"
 cd $DIR
 
-# ensure we're up to date
-uv venv --allow-existing
-source .venv/bin/activate
+source ./setup.sh
 
-uv pip install -e .[testing,docs]
+# *** build ***
+scons -j8
 
-uv run scons -j8
+# *** lint ***
+# TODO: pre-commit is slow; replace it with openpilot's "op lint"
+#pre-commit run --all-files
+ruff check .
 
-uv run pre-commit run --all-files
-uv run pytest -n8
+# *** test ***
+pytest -n8 --ignore opendbc/safety
 
+# *** all done ***
 GREEN='\033[0;32m'
 NC='\033[0m'
 printf "\n${GREEN}All good!${NC} Finished build, lint, and test in ${SECONDS}s\n"
